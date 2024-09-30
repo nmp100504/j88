@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <title>Funny Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .game-container {
+            text-align: center;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .dice-container {
+            display: flex;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+        .dice {
+            width: 60px;
+            height: 60px;
+            background-color: #ccc;
+            border: 2px solid #333;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            margin: 0 10px;
+        }
+        .dice i {
+          font-size: 4.5rem;
+        }
+        .btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin: 0 10px;
+        }
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #result {
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+        #betInput {
+            width: 100px;
+            padding: 5px;
+            margin: 10px 0;
+        }
+        .notification {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #f44336;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div id="notification" class="notification">You have run out of coins!</div>
+        <h1>Funny Game</h1>
+        <p>Coins: <span id="coinDisplay">5000</span></p>
+        <div class="dice-container">
+            <div class="dice" id="dice1">?</div>
+            <div class="dice" id="dice2">?</div>
+            <div class="dice" id="dice3">?</div>
+        </div>
+        <div>
+            <label for="betInput">Your bet:</label>
+            <input type="number" id="betInput" min="1" value="100">
+        </div>
+        <div>
+            <button class="btn" id="btnLessEqual"> &le; 10</button>
+            <button class="btn" id="btnGreater"> &gt; 10</button>
+        </div>
+        <div id="result"></div>
+        <button class="btn" id="btnPlayAgain" style="display: none;">Play Again</button>
+        <button class="btn" id="btnReset" style="display: none; background-color: #f44336;">Reset Game</button>
+    </div>
+
+    <script>
+        const dice1 = document.getElementById('dice1');
+        const dice2 = document.getElementById('dice2');
+        const dice3 = document.getElementById('dice3');
+        const btnGreater = document.getElementById('btnGreater');
+        const btnLessEqual = document.getElementById('btnLessEqual');
+        const result = document.getElementById('result');
+        const coinDisplay = document.getElementById('coinDisplay');
+        const betInput = document.getElementById('betInput');
+        const btnPlayAgain = document.getElementById('btnPlayAgain');
+        const btnReset = document.getElementById('btnReset');
+        const notification = document.getElementById('notification');
+
+        let coins = 5000;
+        let diceValues = [];
+        let total = 0;
+
+        let faceDice = ['<i class="fa-solid fa-dice-one"></i>', '<i class="fa-solid fa-dice-two"></i>', '<i class="fa-solid fa-dice-three"></i>',
+          '<i class="fa-solid fa-dice-four"></i>', '<i class="fa-solid fa-dice-five"></i>', '<i class="fa-solid fa-dice-six"></i>'
+        ]
+
+        function rollDice() {
+            diceValues = [
+                Math.floor(Math.random() * 6) + 1,
+                Math.floor(Math.random() * 6) + 1,
+                Math.floor(Math.random() * 6) + 1
+            ];
+            total = diceValues.reduce((sum, die) => sum + die, 0);
+            updateDiceDisplay('?');
+        }
+
+        function updateDiceDisplay(value) {
+            dice1.textContent = value;
+            dice2.textContent = value;
+            dice3.textContent = value;
+        }
+
+        function revealDice() {
+            dice1.innerHTML = faceDice[diceValues[0] - 1];
+            dice2.innerHTML = faceDice[diceValues[1] - 1];
+            dice3.innerHTML = faceDice[diceValues[2] - 1];
+        }
+
+        function disableButtons(disable) {
+            btnGreater.disabled = disable;
+            btnLessEqual.disabled = disable;
+            betInput.disabled = disable;
+        }
+
+        function updateCoins(win) {
+            const bet = parseInt(betInput.value);
+            coins += win ? bet : -bet;
+            coinDisplay.textContent = coins;
+            if (coins === 0) {
+                showNotification();
+                disableButtons(true);
+                btnReset.style.display = 'inline-block';
+            }
+        }
+
+        function showNotification() {
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        function playGame(userChoice) {
+            const bet = parseInt(betInput.value);
+            if (bet < 1 || bet > coins) {
+                alert('Invalid bet amount!');
+                return;
+            }
+
+            disableButtons(true);
+            revealDice();
+
+            setTimeout(() => {
+                if ((userChoice === 'greater' && total > 10) || (userChoice === 'lessEqual' && total <= 10)) {
+                    result.textContent = `You win! Total is ${total}.`;
+                    result.style.color = 'green';
+                    updateCoins(true);
+                } else {
+                    result.textContent = `You lose! Total is ${total}.`;
+                    result.style.color = 'red';
+                    updateCoins(false);
+                }
+                btnPlayAgain.style.display = 'inline-block';
+            }, 1000);
+        }
+
+        function resetGame() {
+            rollDice();
+            result.textContent = '';
+            disableButtons(false);
+            btnPlayAgain.style.display = 'none';
+            btnReset.style.display = 'none';
+        }
+
+        function resetEntireGame() {
+            coins = 5000;
+            coinDisplay.textContent = coins;
+            resetGame();
+        }
+
+        btnGreater.addEventListener('click', () => playGame('greater'));
+        btnLessEqual.addEventListener('click', () => playGame('lessEqual'));
+        btnPlayAgain.addEventListener('click', resetGame);
+        btnReset.addEventListener('click', resetEntireGame);
+
+        betInput.addEventListener('change', () => {
+            const bet = parseInt(betInput.value);
+            if (bet < 1) betInput.value = 1;
+            if (bet > coins) betInput.value = coins;
+        });
+
+        // Initial game setup
+        resetGame();
+    </script>
+</body>
+</html>
